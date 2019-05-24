@@ -1,14 +1,8 @@
 import urwid
 import hashlib
 import string
-import nltk
 import random
 from random import choice
-
-# Constants
-words_file = open('words.txt', 'r')
-all_words = words_file.read().split('\n')
-words_file.close()
 
 # App Controller
 class App():
@@ -17,7 +11,6 @@ class App():
         self.menuOptions = ['Generate Password', 'Generate Hash']
         self.hashAlgorithms = sorted(h.upper() for h in hashlib.algorithms_guaranteed)
         self.passLen = 0
-        self.words = nltk.download('words')
 
         self.hashText = urwid.Text('')
         self.passTextRegular = urwid.Text('')
@@ -27,6 +20,11 @@ class App():
                             align='center', width=('relative', 90),
                             valign='middle', height=('relative', 85),
                             min_width=20, min_height=9)
+
+        # Load Words 
+        words_file = open('words.txt', 'r')
+        self.all_words = words_file.read().split('\n')
+        words_file.close()
 
         # Start Main Loop
         urwid.MainLoop(
@@ -138,15 +136,16 @@ class App():
         self.hashText.set_text(f'\n{algorithm} Hash:\n{h.hexdigest()}')
 
     def generatePassword(self, length):
-        passObj = Password(int(length))
+        passObj = Password(int(length), self.all_words)
         self.passTextRegular.set_text(f'Alphanumeric: {passObj.passwordRegular}')
         self.passTextRemember.set_text(f'Easy-to-Remember: {passObj.passwordRemember}')
 
 class Password(): 
-    def __init__(self, length) :
+    def __init__(self, length, words) :
         self.alphabet = string.ascii_letters + string.digits
         self.length = length
-        self.words = all_words
+        self.words = words
+        self.specialChars = "!#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
         self.passwordRegular = ''
         self.passwordRemember = ''
 
@@ -170,15 +169,14 @@ class Password():
                 break
 
     def generateRemember(self):
-        specialChars = "!#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
-
         while True:
-            randWord = choice(all_words).capitalize()
+            randWord = choice(self.words).capitalize()
             randWord += str(random.randint(0,10))
             self.passwordRemember += randWord
+
             if (len(self.passwordRemember) >= self.length):
                 self.passwordRemember = self.passwordRemember[:self.length - 1]
-                self.passwordRemember += random.choice(specialChars)
+                self.passwordRemember += random.choice(self.specialChars)
                 break
 
 # App Init
